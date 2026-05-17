@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Agent Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>Support Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="nav-chat" class="nav-btn active">Live Chat</button>
+                <button id="nav-analytics" class="nav-btn">Analytics</button>
+            </nav>
+            <div class="queue-section" id="queue-section">
+                <h3>Waiting Queue</h3>
+                <ul id="queue-list">
+                    <!-- Queue items will be populated here -->
+                </ul>
+            </div>
+        </aside>
+        
+        <main class="chat-workspace">
+            <div id="chat-view">
+                <div class="active-chat-header" id="active-chat-header">
+                    <h2>No Active Chat</h2>
+                    <p>Select a user from the queue to start chatting.</p>
+                </div>
+                
+                <div class="chat-body dashboard-chat" id="chat-body" style="display: none;">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <div class="chat-footer dashboard-footer" id="chat-footer" style="display: none;">
+                    <textarea id="chat-input" placeholder="Type message to customer..." autocomplete="off"></textarea>
+                    <button id="ai-assist-btn" class="ai-btn" title="Get AI Suggestion">✨ AI Assist</button>
+                    <button id="send-btn">Send</button>
+                </div>
+            </div>
+
+            <div id="analytics-view" style="display: none; padding: 2rem; overflow-y: auto; height: 100%;">
+                <h2>Analytics Dashboard</h2>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>Deflection Rate</h3>
+                        <div class="metric-value" id="metric-deflection">0%</div>
+                        <p class="text-muted">Queries resolved by AI</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Bot Avg Response Time</h3>
+                        <div class="metric-value" id="metric-response">0 ms</div>
+                        <p class="text-muted">Processing speed</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Total Escalations</h3>
+                        <div class="metric-value" id="metric-escalations">0</div>
+                        <p class="text-muted">Chats sent to agents</p>
+                    </div>
+                </div>
+
+                <div class="query-logs-section">
+                    <h3>Query Logs (Unresolved Intents)</h3>
+                    <p class="text-muted" style="margin-bottom: 1rem;">Review these queries to train the AI with new responses.</p>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Raw Query</th>
+                                </tr>
+                            </thead>
+                            <tbody id="query-logs-body">
+                                <tr><td colspan="2" class="text-center text-muted">No unresolved queries yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
