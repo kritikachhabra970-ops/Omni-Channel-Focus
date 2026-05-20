@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: omni-channel-focus
+    runtime: docker
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false

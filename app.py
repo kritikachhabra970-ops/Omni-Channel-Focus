@@ -130,7 +130,19 @@ def bot_reply():
                 bot_response = response.text
             except Exception as e:
                 print(f"Gemini API Error: {e}")
-                bot_response = "I'm having trouble connecting to my AI brain. Can you try again or ask for a human agent?"
+                # Mock NLP Fallback due to API error
+                if any(word in msg_lower for word in ['hello', 'hi', 'hey']):
+                    bot_response = "Hello! How can I help you today?"
+                elif 'price' in msg_lower or 'cost' in msg_lower:
+                    bot_response = "Our pricing starts at $9.99/month. Would you like more details on our plans?"
+                elif 'refund' in msg_lower:
+                    bot_response = "I can help with that. Please provide your order number."
+                else:
+                    bot_response = "I am an AI assistant. I can answer questions about pricing, refunds, or connect you to an agent. How can I assist you further?"
+                    analytics_data['unresolved_queries'].append({
+                        'query': message,
+                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
         else:
             # Mock NLP Fallback
             if any(word in msg_lower for word in ['hello', 'hi', 'hey']):
@@ -287,4 +299,6 @@ def on_customer_message(data):
         emit('new_message', {'sender': 'customer', 'text': message}, room=conversation_id)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
