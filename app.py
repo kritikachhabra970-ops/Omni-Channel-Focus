@@ -11,8 +11,23 @@ import requests
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+gemini_model = None
+fallback_model = None
+api_key_valid = False
+
 if GEMINI_API_KEY and GEMINI_API_KEY != "your_api_key_here":
-    genai.configure(api_key=GEMINI_API_KEY)
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        # Dry-run validation of the API key
+        list(genai.list_models())
+        api_key_valid = True
+        print("SUCCESS: Gemini API Key verified successfully!")
+    except Exception as e:
+        print(f"CRITICAL WARNING: Gemini API Key validation failed: {e}")
+        print("The server will run in premium MOCK FALLBACK mode. Please configure a valid GEMINI_API_KEY in your .env file to enable real AI.")
+        api_key_valid = False
+
+if api_key_valid:
     generation_config = {
         "temperature": 0.7,
         "top_p": 0.95,
@@ -30,10 +45,6 @@ if GEMINI_API_KEY and GEMINI_API_KEY != "your_api_key_here":
         system_instruction="Professional assistant. If the user asks for an image, output [IMAGE_SEARCH: subject].",
         generation_config=generation_config
     )
-else:
-    gemini_model = None
-    fallback_model = None
-    fallback_model = None
 
 # Final fallback responses if AI is completely unavailable
 MOCK_SUGGESTIONS = [
@@ -43,6 +54,27 @@ MOCK_SUGGESTIONS = [
     "I'm happy to help with this. Could you please clarify your request so I can provide the most accurate response?",
     "I'm processing your request. One moment please while I gather the necessary information."
 ]
+
+def get_mock_response(message):
+    msg_lower = message.lower()
+    if any(word in msg_lower for word in ['hello', 'hi', 'hey', 'greetings', 'morning', 'evening']):
+        return "Hello! 👋 Welcome to our Customer Support. I'm currently running in demo/mock mode, but I can help you with pricing plans, refunds, support contacts, or connect you to a live human operator. What can I help you with today?"
+    
+    elif any(word in msg_lower for word in ['price', 'cost', 'pricing', 'plan', 'subscription', 'monthly', 'annual']):
+        return "💳 **Our Pricing & Subscription Plans:**\n\n1. **Starter Plan:** $9.99/mo - Basic access, standard email support.\n2. **Pro Plan:** $29.99/mo - High-speed, priority support, full chatbot capabilities.\n3. **Enterprise Plan:** Custom pricing - Tailored integrations, dedicated account manager.\n\nWould you like to upgrade or have specific billing questions?"
+        
+    elif any(word in msg_lower for word in ['refund', 'cancel', 'return', 'money back', 'charge']):
+        return "🔄 **Refund & Cancellation Policy:**\n\nWe offer a hassle-free, **14-day money-back guarantee** on all new plans! If you are unsatisfied or want to cancel your plan:\n1. Please provide your order number or account email.\n2. State the reason for cancellation.\n\nOnce submitted, refunds are usually processed within 3-5 business days."
+        
+    elif any(word in msg_lower for word in ['contact', 'email', 'phone', 'call', 'support', 'address']):
+        return "📞 **Support & Contact Details:**\n\n* **Email Support:** support@omnichannel.com (Available 24/7)\n* **Phone Support:** +1 (800) 555-0199 (Mon-Fri, 9 AM - 5 PM EST)\n* **Live Operator:** Just type 'talk to agent' to connect directly to our agent dashboard!"
+        
+    elif any(word in msg_lower for word in ['feature', 'capability', 'what can you do', 'how does this work']):
+        return "🤖 **What I Can Do:**\n\n* **Automated Support:** Solve basic pricing, refund, and contact inquiries.\n* **Smart Escales:** Connect you instantly to a live human operator when you ask.\n* **Dashboard Analytics:** Admin/Agent tools are available at `/dashboard` to view statistics in real-time."
+        
+    else:
+        return "I am our AI Assistant in Demo Mode. 🤖\n\nI can answer questions about:\n* **Pricing Plans** (Type 'pricing')\n* **Refund Policy** (Type 'refund')\n* **Contact & Support Info** (Type 'contact')\n\nAlternatively, if you'd like to chat with a real human operator, just type **'talk to agent'**!"
+
 import random
 
 def get_real_image(query):
@@ -92,6 +124,13 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    return jsonify({
+        'api_key_configured': GEMINI_API_KEY is not None and GEMINI_API_KEY != "your_api_key_here",
+        'api_key_valid': api_key_valid
+    })
+
 @app.route('/api/bot_reply', methods=['POST'])
 def bot_reply():
     start_time = time.time()
@@ -114,7 +153,7 @@ def bot_reply():
     escalate = False
     bot_response = "I'm sorry, I don't quite understand. Could you rephrase?"
     
-    if any(word in msg_lower for word in ['human', 'agent', 'help', 'operator', 'representative', 'real person']):
+    if any(word in msg_lower for word in ['human', 'agent', 'help', 'operator', 'representative', 'real person', 'talk to agent']):
         bot_response = "I understand you want to speak with a human agent. Let me connect you..."
         escalate = True
         analytics_data['escalations'] += 1
@@ -131,28 +170,16 @@ def bot_reply():
             except Exception as e:
                 print(f"Gemini API Error: {e}")
                 # Mock NLP Fallback due to API error
-                if any(word in msg_lower for word in ['hello', 'hi', 'hey']):
-                    bot_response = "Hello! How can I help you today?"
-                elif 'price' in msg_lower or 'cost' in msg_lower:
-                    bot_response = "Our pricing starts at $9.99/month. Would you like more details on our plans?"
-                elif 'refund' in msg_lower:
-                    bot_response = "I can help with that. Please provide your order number."
-                else:
-                    bot_response = "I am an AI assistant. I can answer questions about pricing, refunds, or connect you to an agent. How can I assist you further?"
+                bot_response = get_mock_response(message)
+                if bot_response.startswith("I am our AI Assistant"):
                     analytics_data['unresolved_queries'].append({
                         'query': message,
                         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     })
         else:
             # Mock NLP Fallback
-            if any(word in msg_lower for word in ['hello', 'hi', 'hey']):
-                bot_response = "Hello! How can I help you today?"
-            elif 'price' in msg_lower or 'cost' in msg_lower:
-                bot_response = "Our pricing starts at $9.99/month. Would you like more details on our plans?"
-            elif 'refund' in msg_lower:
-                bot_response = "I can help with that. Please provide your order number."
-            else:
-                bot_response = "I am an AI assistant. I can answer questions about pricing, refunds, or connect you to an agent. How can I assist you further?"
+            bot_response = get_mock_response(message)
+            if bot_response.startswith("I am our AI Assistant"):
                 analytics_data['unresolved_queries'].append({
                     'query': message,
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")

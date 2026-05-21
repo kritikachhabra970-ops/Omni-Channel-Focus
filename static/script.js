@@ -113,3 +113,16 @@ socket.on('new_message', (data) => {
         addMessage(data.text, 'bot'); // Agent messages appear as bot/receiver style
     }
 });
+
+// Check server/API key status on page load
+fetch('/api/status')
+    .then(response => response.json())
+    .then(data => {
+        if (!data.api_key_valid) {
+            const warningBanner = document.getElementById('api-warning-banner');
+            if (warningBanner) {
+                warningBanner.style.display = 'block';
+            }
+        }
+    })
+    .catch(error => console.error('Error verifying API status:', error));
