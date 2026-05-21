@@ -1,4 +1,4 @@
-# 🤖 Omni-Channel Support Focus — AI Customer Support Platform
+# 🤖 Omni-Channel Support Focus - AI Customer Support Platform
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0%2B-black?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -147,7 +147,7 @@ Distributed under the **MIT License**. For detailed information, see the license
 
 ## 🤝 Acknowledgements & Support
 
-### ❤️ Acknowledgements
+###  Acknowledgements
 * [Google DeepMind](https://deepmind.google/) for providing the low-latency Gemini LLM APIs.
 * [Flask & Flask-SocketIO](https://flask-socketio.readthedocs.io/) for high-performance event-driven networking.
 * [Marked.js](https://marked.js.org/) for modern browser markdown translation.
