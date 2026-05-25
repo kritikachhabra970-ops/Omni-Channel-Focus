@@ -1,4 +1,3 @@
-const socket = io({ transports: ['polling'] });
 const chatBody = document.getElementById('chat-body');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
@@ -11,9 +10,19 @@ localStorage.setItem('conversationId', conversationId);
 let isAgentHandling = false;
 
 // Join the chat room for this user
-socket.on('connect', () => {
-    socket.emit('join_chat', { conversation_id: conversationId });
-});
+function sendMessageToBackend(text) {
+    fetch('/api/send_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversation_id: conversationId, // Ye variable aapke paas pehle se hai
+            sender: 'user',
+            text: text
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log('Message sent:', data));
+}
 
 // Global Image Fallback Handler
 window.addEventListener('error', (e) => {
@@ -55,13 +64,6 @@ async function sendMessage() {
     chatInput.value = '';
     
     // 2. If agent is handling, emit via socket
-    if (isAgentHandling) {
-        socket.emit('customer_message', {
-            conversation_id: conversationId,
-            message: text
-        });
-        return;
-    }
     
     // 3. Otherwise, send to AI backend
     try {
@@ -99,8 +101,6 @@ chatInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Listen for agent joining
-// Naya message receive karne ke liye Pusher listener
 channel.bind('new-message', function(data) {
     console.log('Message received:', data);
     
