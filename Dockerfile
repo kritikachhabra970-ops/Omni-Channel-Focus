@@ -23,4 +23,6 @@ EXPOSE 10000
 
 # Start the application using gunicorn and eventlet worker
 CMD ["sh", "-c", "gunicorn --worker-class eventlet -w 1 -b 0.0.0.0:$PORT app:app"]
+
+
  
