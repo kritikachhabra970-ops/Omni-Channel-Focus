@@ -100,20 +100,15 @@ chatInput.addEventListener('keypress', (e) => {
 });
 
 // Listen for agent joining
-socket.on('agent_joined', (data) => {
-    isAgentHandling = true;
-    chatStatus.textContent = 'Agent Connected';
-    chatStatus.className = 'online';
-    addMessage(data.message, 'bot'); // Display system message as bot
-});
-
-// Listen for new messages from agent
-socket.on('new_message', (data) => {
+// Naya message receive karne ke liye Pusher listener
+channel.bind('new-message', function(data) {
+    console.log('Message received:', data);
+    
+    // Agar message agent ka hai
     if (data.sender === 'agent') {
-        addMessage(data.text, 'bot'); // Agent messages appear as bot/receiver style
+        addMessage(data.text, 'bot'); // Display as bot/agent
     }
 });
-
 // Check server/API key status on page load
 fetch('/api/status')
     .then(response => response.json())
