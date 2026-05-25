@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO, emit, join_room
+import pusher
 import uuid
 import re
 import time
@@ -8,6 +7,15 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 import requests
+from flask import Flask, render_template, request, jsonify
+# Pusher Setup
+pusher_client = pusher.Pusher(
+  app_id='2158913',
+  key='145e79fafd58fc0714e0',
+  secret='28ef5a5db30015c38f2e', 
+  cluster='ap2',
+  ssl=True
+)
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
