@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ transports: ['polling'] });
 const queueList = document.getElementById('queue-list');
 const activeChatHeader = document.getElementById('active-chat-header');
 const chatBody = document.getElementById('chat-body');
