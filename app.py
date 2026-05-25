@@ -123,7 +123,7 @@ def get_real_image(query):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', transports=['polling'])
 
 # In-memory storage for simplicity (instead of SQLite for a quick prototype)
 conversations = {}
