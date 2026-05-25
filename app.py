@@ -131,7 +131,7 @@ def get_real_image(query):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', transports=['polling'])
+
 
 # In-memory storage for simplicity (instead of SQLite for a quick prototype)
 conversations = {}
@@ -233,7 +233,7 @@ def bot_reply():
             queue.append(conversation_id)
             
         # Notify dashboard about new queue item
-        socketio.emit('queue_update', {'queue': queue}, to='agents')
+        pusher_client.trigger('chat-channel', 'queue-update', {'queue': queue})
 
     response_time = time.time() - start_time
     analytics_data['bot_response_times'].append(response_time)
@@ -302,61 +302,19 @@ def get_analytics():
         'unresolved_queries': analytics_data['unresolved_queries'][-50:] # latest 50
     })
 
-# Socket.IO Event Handlers
+# Pusher API route for sending messages
+@app.route('/api/send_message', methods=['POST'])
+def send_message():
+    data = request.json
+    pusher_client.trigger('chat-channel', 'new-message', {
+        'conversation_id': data.get('conversation_id'),
+        'sender': data.get('sender'),
+        'text': data.get('text')
+    })
+    return jsonify({"status": "success"})
 
-@socketio.on('connect')
-def test_connect():
-    pass
-
-@socketio.on('join_agent')
-def on_join_agent():
-    join_room('agents')
-    emit('queue_update', {'queue': queue})
-    print("Agent joined")
-
-@socketio.on('join_chat')
-def on_join_chat(data):
-    room = data.get('conversation_id')
-    join_room(room)
-    print(f"User joined chat: {room}")
-
-@socketio.on('agent_takeover')
-def on_agent_takeover(data):
-    conversation_id = data.get('conversation_id')
-    agent_id = request.sid
-    
-    if conversation_id in queue:
-        queue.remove(conversation_id)
-        if conversation_id in conversations:
-            conversations[conversation_id]['status'] = 'agent_handling'
-            conversations[conversation_id]['agent_id'] = agent_id
-            
-        join_room(conversation_id)
-        
-        # Notify user that agent has joined
-        emit('agent_joined', {'message': 'An agent has joined the chat.'}, room=conversation_id)
-        # Update dashboards
-        emit('queue_update', {'queue': queue}, to='agents')
-        
-@socketio.on('agent_message')
-def on_agent_message(data):
-    conversation_id = data.get('conversation_id')
-    message = data.get('message')
-    
-    # Broadcast to the room (customer will see it)
-    emit('new_message', {'sender': 'agent', 'text': message}, room=conversation_id)
-
-@socketio.on('customer_message')
-def on_customer_message(data):
-    conversation_id = data.get('conversation_id')
-    message = data.get('message')
-    
-    # If agent is handling, just broadcast it in the room
-    if conversation_id in conversations and conversations[conversation_id].get('status') == 'agent_handling':
-        emit('new_message', {'sender': 'customer', 'text': message}, room=conversation_id)
-
+# Start the Flask app
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
+    app.run(host='0.0.0.0', port=port)
  
