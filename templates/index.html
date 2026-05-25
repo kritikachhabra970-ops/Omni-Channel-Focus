@@ -6,7 +6,24 @@
     <title>Customer Support Chatbot</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
+<script>
+  // Pusher setup
+  var pusher = new Pusher('28ef5a5db30015c38f2e', {
+    cluster: 'ap2'
+  });
+
+  var channel = pusher.subscribe('chat-channel');
+  
+  // Naya message aane par kya karna hai
+  channel.bind('new-message', function(data) {
+    console.log('Message received:', data);
+    // Yahan aapka purana SocketIO wala function call karein 
+    // jo screen par message dikhata hai
+    appendMessageToChat(data.sender, data.text);
+  });
+</script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
